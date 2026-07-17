@@ -14,16 +14,20 @@ from css.prompts.scout import SCOUT_SYSTEM_PROMPT
 from css.prompts.planner import PLANNER_SYSTEM_PROMPT
 from css.prompts.raider import RAIDER_SYSTEM_PROMPT
 from css.tools.registry import TOOL_REGISTRY
+from css.tools.utils import set_proxy_env
 
 console = Console()
 
 
 class Sultanate:
-    def __init__(self, target: str, model: str = "llama3.2:3b", verbose: bool = False, skip_raider: bool = False):
-        self.config = Config(model=model, verbose=verbose, skip_raider=skip_raider)
+    def __init__(self, target: str, model: str = "llama3.2:3b", verbose: bool = False, skip_raider: bool = False, proxy: str = "", tor: bool = False, proxy_dns: bool = False):
+        self.config = Config(model=model, verbose=verbose, skip_raider=skip_raider, proxy=proxy, tor=tor, proxy_dns=proxy_dns)
         self.target_obj = Target(target)
         self.state = SultanateState(target=target)
         self.state.config = self.config
+        env = self.config.proxy_env()
+        if env:
+            set_proxy_env(env)
 
     def _ollama_chat(self, messages: list[dict], retries: int = 2) -> str:
         url = f"{self.config.ollama_host}/api/chat"
@@ -39,7 +43,7 @@ class Sultanate:
         last_error = None
         for attempt in range(retries + 1):
             try:
-                resp = httpx.post(url, json=payload, timeout=300)
+                resp = httpx.post(url, json=payload, timeout=300, proxies=None)
                 resp.raise_for_status()
                 data = resp.json()
                 content = data.get("message", {}).get("content", "")

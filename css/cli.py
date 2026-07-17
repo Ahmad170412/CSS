@@ -20,9 +20,12 @@ def run(
     output: Path = typer.Option(None, "--output", "-o", help="Save report to file (JSON or .txt)"),
     skip_raider: bool = typer.Option(False, "--skip-raider", help="Skip the exploitation phase"),
     max_workers: int = typer.Option(4, "--max-workers", "-w", help="Max parallel tool executions"),
+    proxy: str = typer.Option("", "--proxy", help="Proxy URL (e.g. socks5://127.0.0.1:9050, http://proxy:8080)"),
+    tor: bool = typer.Option(False, "--tor", help="Route traffic through Tor (socks5://127.0.0.1:9050)"),
+    proxy_dns: bool = typer.Option(False, "--proxy-dns", help="Proxy DNS lookups too (may leak if not supported)"),
 ):
     try:
-        sultanate = Sultanate(target=target, model=model, verbose=verbose)
+        sultanate = Sultanate(target=target, model=model, verbose=verbose, proxy=proxy, tor=tor, proxy_dns=proxy_dns)
         sultanate.config.skip_raider = skip_raider
         sultanate.config.max_workers = max_workers
         sultanate.execute()

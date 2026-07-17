@@ -5,7 +5,7 @@ import httpx
 import tempfile
 import os
 from urllib.parse import urlparse
-from css.tools.utils import _run, _check_tool
+from css.tools.utils import _run, _check_tool, get_proxy_url
 
 
 WORDLIST_CANDIDATES = [
@@ -40,6 +40,9 @@ def _make_temp_wordlist():
 
 
 def _http_get(url, verify=True, **kwargs):
+    proxy = get_proxy_url(url)
+    if proxy:
+        kwargs["proxy"] = proxy
     try:
         return httpx.get(url, verify=verify, **kwargs)
     except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError):

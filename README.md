@@ -16,11 +16,13 @@ A **fully autonomous** penetration testing agent that runs locally, uses a local
 - [Installation](#installation)
 - [Usage](#usage)
   - [Model Selection](#model-selection)
+  - [Proxies & Tor](#proxies--tor)
 - [Output](#output)
 - [Example Workflow](#example-workflow)
 - [CSS in Action](#css-in-action)
 - [Security & Scope](#security--scope)
 - [Configuration](#configuration)
+- [Proxy & Tor](#proxy--tor)
 - [What It Doesn't Do](#what-it-doesnt-do)
 - [License](#license)
 
@@ -107,6 +109,31 @@ css run example.com --model codellama:7b
 
 Larger models (14B+) tend to produce more reliable decisions but are slower. Smaller models (3B–7B) are faster but may occasionally misinterpret tool output. Experiment to find the best balance for your setup.
 
+### Proxies & Tor
+
+Route all scan traffic through a proxy or Tor to avoid source-IP blocking and add a layer of anonymity. CSS supports any SOCKS5 or HTTP proxy.
+
+```bash
+# Route through a SOCKS5 proxy
+css run example.com --proxy socks5://127.0.0.1:9050
+
+# Shorthand for Tor (socks5://127.0.0.1:9050)
+css run example.com --tor
+
+# Route through an HTTP proxy
+css run example.com --proxy http://proxy.company.com:8080
+
+# Don't filter localhost from the proxy (for debugging)
+css run example.com --proxy http://proxy:8080 --proxy-dns
+```
+
+**How it works:** When `--proxy` or `--tor` is set, CSS injects `HTTP_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY` environment variables into every subprocess it spawns (`nmap`, `sqlmap`, `gobuster`, etc.). In-process `httpx` calls (whatweb, web_crawl, NVD queries) receive the proxy directly. Localhost and the Ollama API server are automatically added to `NO_PROXY` so the LLM stays local.
+
+**Notes:**
+- SOCKS5 proxy support requires `httpx[socks]` — run `pip install httpx[socks]` if not already installed
+- nmap's SYN scan (`-sS`) doesn't work through proxies; CSS uses the default TCP connect scan
+- Proxy latency adds to scan time, especially over Tor
+
 ## Output
 
 - **Console**: Live progress with colored tables for open ports, exploits, findings
@@ -180,8 +207,49 @@ css run target \
   --verify-ssl \             # Enable TLS verification
   --skip-raider \            # Recon + vuln scan only
   --verbose \                # Show LLM responses
-  --output report.json
+  --output report.json \     # Save report to file
+  --proxy socks5://... \     # Proxy URL for all traffic
+  --tor \                    # Route through Tor
+  --proxy-dns                # Proxy DNS lookups too
 ```
+
+## Proxy & Tor
+
+CSS supports routing all scan traffic through an HTTP or SOCKS5 proxy, including Tor. This applies to:
+
+- **Subprocess tools**: `nmap`, `sqlmap`, `gobuster`, `ffuf`, `nikto`, `hydra`, `whois`, `dnsrecon`, `searchsploit`, `metasploit`, `shodan` — via standard `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY` environment variables (set automatically).
+- **Python HTTP calls**: `whatweb` (fallback), `httpx`, `web_crawl`, NVD queries — via `httpx` proxy support.
+
+### Usage
+
+```bash
+# Explicit proxy (HTTP or SOCKS5)
+css run example.com --proxy http://proxy:8080
+css run example.com --proxy socks5://127.0.0.1:9050
+
+# Tor shortcut (assumes tor running on socks5://127.0.0.1:9050)
+css run example.com --tor
+
+# Proxy DNS too (may leak if tools don't support it)
+css run example.com --tor --proxy-dns
+```
+
+### What Works / What Doesn't
+
+| Category | Works? | Notes |
+|----------|--------|-------|
+| nmap TCP connect scan (`-sT`) | ✅ | SYN scan (`-sS`) bypasses proxy — not supported |
+| sqlmap, gobuster, ffuf, nikto, hydra | ✅ | Respect `ALL_PROXY` env var |
+| whatweb, httpx, web_crawl, NVD API | ✅ | Use `httpx` with explicit proxy |
+| dnsrecon, whois | ⚠️ | May leak DNS unless `--proxy-dns` (limited support) |
+| searchsploit, metasploit, shodan | ⚠️ | Local tools or use local sockets — may not route |
+
+### Caveats
+
+- **Performance**: Tor adds 2–5s latency per request. Parallel workers (`-w`) will idle waiting on proxy responses.
+- **False negatives**: Tor exit nodes are heavily WAF-rate-limited; you may miss findings visible from a clean IP.
+- **Ollama stays local**: The LLM API (`http://localhost:11434`) is excluded from proxy routing automatically via `NO_PROXY`.
+- **SOCKS5 support**: Requires `httpx[socks]` extra (`pip install 'httpx[socks]'`). If missing, HTTP proxies still work.
 
 ## What It Doesn't Do
 

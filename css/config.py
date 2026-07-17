@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import re
 from urllib.parse import urlparse
 
@@ -63,6 +63,34 @@ class Config:
     verify_ssl: bool = False
     verbose: bool = False
     skip_raider: bool = False
+    proxy: str = ""
+    tor: bool = False
+    proxy_dns: bool = False
+
+    def __post_init__(self):
+        if self.tor and not self.proxy:
+            self.proxy = "socks5://127.0.0.1:9050"
+
+    def proxy_env(self) -> dict[str, str]:
+        if not self.proxy:
+            return {}
+        from urllib.parse import urlparse
+        no_proxy = {"localhost", "127.0.0.1", "::1"}
+        # Parse ollama_host robustly (handle with or without scheme)
+        ollama_host = self.ollama_host
+        if not ollama_host.startswith(("http://", "https://")):
+            ollama_host = "http://" + ollama_host
+        parsed = urlparse(ollama_host)
+        if parsed.hostname:
+            no_proxy.add(parsed.hostname)
+        env = {
+            "HTTP_PROXY": self.proxy,
+            "HTTPS_PROXY": self.proxy,
+            "ALL_PROXY": self.proxy,
+        }
+        if not self.proxy_dns:
+            env["NO_PROXY"] = ",".join(sorted(no_proxy))
+        return env
 
 
 @dataclass

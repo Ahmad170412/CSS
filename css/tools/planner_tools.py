@@ -2,7 +2,7 @@ import re
 import httpx
 import os
 import time
-from css.tools.utils import _run, _check_tool
+from css.tools.utils import _run, _check_tool, get_proxy_url
 
 
 def searchsploit(query):
@@ -47,9 +47,11 @@ def nvd_query(cve_id):
     descriptions = []
     cvss_data = {}
     
+    proxy = get_proxy_url(url)
+    proxy_param = proxy if proxy else None
     for attempt in range(3):
         try:
-            resp = httpx.get(url, headers=headers, timeout=15)
+            resp = httpx.get(url, headers=headers, timeout=15, proxy=proxy_param)
             if resp.status_code == 200:
                 data = resp.json()
                 vulns = data.get("vulnerabilities", [])
