@@ -1,5 +1,11 @@
 # Cyber Sultanate System (CSS)
 
+![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
+![Version](https://img.shields.io/badge/version-0.1.0-8250DF)
+![License](https://img.shields.io/badge/license-MIT-3DA639)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS-lightgrey)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
+
 A **fully autonomous** penetration testing agent that runs locally, uses a local LLM, and focuses on what actually matters: finding the known vulnerabilities you haven't patched yet — without you babysitting it.
 
 ## Why This Exists
@@ -31,6 +37,7 @@ You get a final report. No intermediate prompts. No "what should I do next?" dec
 - **System tools** (install via package manager):
   - nmap, gobuster, ffuf, dnsrecon, whois, searchsploit, nikto, sqlmap, hydra, metasploit-framework
 - Python 3.11+
+- **Linux or macOS** — Windows is not supported. While many of the required tools have Windows ports, the agent shells out commands using Unix paths and POSIX conventions, and hasn't been adapted for a Windows environment.
 
 ```bash
 # Quick check
