@@ -121,6 +121,14 @@ Final Report:
   - SQL Injection: Not vulnerable
 ```
 
+## CSS in Action
+
+CSS running against `scanme.nmap.org`:
+
+![CSS Scout & Planner phases](assets/Screenshot_css1.png)
+
+![CSS Raider phase](assets/Screenshot_css2.png)
+
 ## Security & Scope
 
 - **Target allowlist**: LLM can only scan the original target or its subdomains. Explicit IPs must match exactly.
