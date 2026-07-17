@@ -8,6 +8,22 @@
 
 A **fully autonomous** penetration testing agent that runs locally, uses a local LLM, and focuses on what actually matters: finding the known vulnerabilities you haven't patched yet — without you babysitting it.
 
+## Table of Contents
+
+- [Why This Exists](#why-this-exists)
+- [How It Works](#how-it-works-fully-autonomous)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Model Selection](#model-selection)
+- [Output](#output)
+- [Example Workflow](#example-workflow)
+- [CSS in Action](#css-in-action)
+- [Security & Scope](#security--scope)
+- [Configuration](#configuration)
+- [What It Doesn't Do](#what-it-doesnt-do)
+- [License](#license)
+
 ## Why This Exists
 
 Most breaches aren't zero-days. They're unpatched CVEs, default credentials, exposed services, and misconfigurations that have had fixes for months — sometimes years. CSS doesn't hunt for novel exploits. It systematically reconnoiters, correlates findings with exploit databases, and attempts exploitation using standard tools. All on your machine. No cloud API keys. No data leaves your network.
@@ -33,7 +49,7 @@ You get a final report. No intermediate prompts. No "what should I do next?" dec
 
 ## Requirements
 
-- **Ollama** running locally (`ollama serve`) with a model like `llama3.2:3b`
+- **Ollama** running locally (`ollama serve`) with a model pulled (e.g., `ollama pull llama3.2:3b`)
 - **System tools** (install via package manager):
   - nmap, gobuster, ffuf, dnsrecon, whois, searchsploit, nikto, sqlmap, hydra, metasploit-framework
 - Python 3.11+
@@ -70,6 +86,26 @@ css list-models
 # Check tool availability
 css doctor
 ```
+
+### Model Selection
+
+CSS works with any Ollama model. To choose one:
+
+```bash
+# List models available on your machine
+css list-models
+
+# Or check what Ollama has directly
+ollama ls
+
+# Run with a specific model
+css run example.com --model llama3.2:3b
+css run example.com --model mistral:7b
+css run example.com --model qwen2.5:7b
+css run example.com --model codellama:7b
+```
+
+Larger models (14B+) tend to produce more reliable decisions but are slower. Smaller models (3B–7B) are faster but may occasionally misinterpret tool output. Experiment to find the best balance for your setup.
 
 ## Output
 
